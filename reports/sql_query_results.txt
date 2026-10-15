@@ -1,0 +1,232 @@
+================================================================================
+SQL DATA QUALITY AUDIT RESULTS
+================================================================================
+
+--- Check 1 ---
+SELECT 
+    customerID, 
+    COUNT(*) AS occurrence_count
+FROM telco_churn
+GROUP BY customerID
+HAVING COUNT(*) > 1;
+
+Result:
+Empty DataFrame
+Columns: [customerID, occurrence_count]
+Index: []
+Status: PASSED (0 violating records)
+
+--- Check 2 ---
+SELECT 
+    SUM(CASE WHEN customerID IS NULL THEN 1 ELSE 0 END) AS null_customerID,
+    SUM(CASE WHEN tenure IS NULL THEN 1 ELSE 0 END) AS null_tenure,
+    SUM(CASE WHEN MonthlyCharges IS NULL THEN 1 ELSE 0 END) AS null_MonthlyCharges,
+    SUM(CASE WHEN TotalCharges IS NULL THEN 1 ELSE 0 END) AS null_TotalCharges,
+    SUM(CASE WHEN Contract IS NULL THEN 1 ELSE 0 END) AS null_Contract,
+    SUM(CASE WHEN PaymentMethod IS NULL THEN 1 ELSE 0 END) AS null_PaymentMethod,
+    SUM(CASE WHEN Churn IS NULL THEN 1 ELSE 0 END) AS null_Churn,
+    SUM(CASE WHEN churn_binary IS NULL THEN 1 ELSE 0 END) AS null_churn_binary
+FROM telco_churn;
+
+Result:
+ null_customerID  null_tenure  null_MonthlyCharges  null_TotalCharges  null_Contract  null_PaymentMethod  null_Churn  null_churn_binary
+               0            0                    0                  0              0                   0           0                  0
+Status: PASSED (All audit metrics are 0)
+
+--- Check 3 ---
+SELECT 
+    COUNT(*) AS invalid_numeric_records
+FROM telco_churn
+WHERE tenure < 0 
+   OR MonthlyCharges <= 0 
+   OR TotalCharges < 0;
+
+Result:
+ invalid_numeric_records
+                       0
+Status: PASSED (All audit metrics are 0)
+
+--- Check 4 ---
+SELECT 
+    customerID,
+    tenure,
+    MonthlyCharges,
+    TotalCharges,
+    Churn
+FROM telco_churn
+WHERE tenure = 0 AND TotalCharges != 0.0;
+
+Result:
+Empty DataFrame
+Columns: [customerID, tenure, MonthlyCharges, TotalCharges, Churn]
+Index: []
+Status: PASSED (0 violating records)
+
+--- Check 5 ---
+SELECT 
+    COUNT(*) AS flag_mismatch_count
+FROM telco_churn
+WHERE (Churn = 'Yes' AND churn_binary != 1)
+   OR (Churn = 'No' AND churn_binary != 0);
+
+Result:
+ flag_mismatch_count
+                   0
+Status: PASSED (All audit metrics are 0)
+
+--- Check 6 ---
+SELECT 
+    COUNT(*) AS proxy_mismatch_count
+FROM telco_churn
+WHERE (churn_binary = 1 AND mrr_exposure_proxy != MonthlyCharges)
+   OR (churn_binary = 0 AND mrr_exposure_proxy != 0.0);
+
+Result:
+ proxy_mismatch_count
+                    0
+Status: PASSED (All audit metrics are 0)
+
+
+================================================================================
+SQL RETENTION & REVENUE RISK ANALYTICAL RESULTS
+================================================================================
+
+[QUERY 1: Overall Portfolio Performance & Churn Rate]
+ total_customers  churned_customers  retained_customers  portfolio_churn_rate_pct  total_monthly_billings  churned_monthly_exposure_proxy  pct_monthly_revenue_exposed  total_historical_realized_revenue
+            7043               1869                5174                     26.54                456116.6                       139130.85                         30.5                         16056168.7
+--------------------------------------------------------------------------------
+
+[QUERY 2: Churn Propensity & Volume by Contract Commitment Term]
+      Contract  customer_count  pct_of_customer_base  churned_count  churn_rate_pct  avg_monthly_charges  total_mrr_exposure_proxy
+Month-to-month            3875                 55.02           1655           42.71                66.40                 120847.10
+      One year            1473                 20.91            166           11.27                65.05                  14118.45
+      Two year            1695                 24.07             48            2.83                60.77                   4165.30
+--------------------------------------------------------------------------------
+
+[QUERY 3: Customer Lifecycle Cohort Analysis (Tenure Group x Contract)]
+tenure_cohort       Contract  cohort_size  churned_count  churn_rate_pct  cohort_mrr_exposure_proxy
+  0-12 Months Month-to-month         1994           1024           51.35                   68301.45
+  0-12 Months       One year          124             13           10.48                     652.80
+  0-12 Months       Two year           68              0            0.00                       0.00
+ 13-24 Months Month-to-month          737            278           37.72                   21980.30
+ 13-24 Months       One year          197             16            8.12                    1101.35
+ 13-24 Months       Two year           90              0            0.00                       0.00
+ 25-48 Months Month-to-month          802            264           32.92                   22557.00
+ 25-48 Months       One year          518             55           10.62                    4521.35
+ 25-48 Months       Two year          274              6            2.19                     384.15
+ 49-60 Months Month-to-month          234             65           27.78                    5684.45
+ 49-60 Months       One year          321             44           13.71                    4034.40
+ 49-60 Months       Two year          277             11            3.97                     863.05
+ 61-72 Months Month-to-month          108             24           22.22                    2323.90
+ 61-72 Months       One year          313             38           12.14                    3808.55
+ 61-72 Months       Two year          986             31            3.14                    2918.10
+--------------------------------------------------------------------------------
+
+[QUERY 4: Financial Metrics & Billing Burden Comparison by Churn Status]
+Churn  customer_count  avg_monthly_charges  min_monthly_charges  max_monthly_charges  avg_lifetime_charges  avg_tenure_months  realized_monthly_yield
+   No            5174                61.27                18.25               118.75               2549.91               37.6                   61.31
+  Yes            1869                74.44                18.85               118.35               1531.80               18.0                   74.43
+--------------------------------------------------------------------------------
+
+[QUERY 5: Multi-Dimensional Customer Segmentation (Internet x Tech Support x Billing)]
+InternetService         TechSupport             PaymentMethod  segment_size  churned_count  churn_rate_pct  segment_monthly_billings  segment_mrr_exposure_proxy
+    Fiber optic                  No          Electronic check          1288            748           58.07                 112528.60                    64504.45
+    Fiber optic                  No              Mailed check           185             92           49.73                  15195.00                     7466.60
+            DSL                  No          Electronic check           442            172           38.91                  21744.00                     7650.45
+    Fiber optic                  No Bank transfer (automatic)           400            146           36.50                  35930.50                    12764.90
+    Fiber optic                 Yes          Electronic check           307            101           32.90                  30517.85                     9841.95
+    Fiber optic                  No   Credit card (automatic)           357            115           32.21                  32012.30                    10164.85
+            DSL                  No              Mailed check           333             94           28.23                  16193.05                     4320.05
+    Fiber optic                 Yes              Mailed check            73             18           24.66                   7129.70                     1721.75
+            DSL                  No   Credit card (automatic)           238             41           17.23                  12928.70                     2013.25
+            DSL                 Yes          Electronic check           206             35           16.99                  12958.35                     1988.95
+    Fiber optic                 Yes Bank transfer (automatic)           246             41           16.67                  25265.05                     4221.70
+            DSL                  No Bank transfer (automatic)           230             38           16.52                  12507.40                     1825.25
+    Fiber optic                 Yes   Credit card (automatic)           240             36           15.00                  24705.40                     3613.85
+             No No internet service          Electronic check           122             15           12.30                   2596.20                      302.95
+            DSL                 Yes              Mailed check           280             33           11.79                  16941.20                     1866.70
+             No No internet service              Mailed check           741             71            9.58                  15335.35                     1428.50
+            DSL                 Yes   Credit card (automatic)           356             31            8.71                  24496.70                     1956.25
+             No No internet service Bank transfer (automatic)           332             18            5.42                   7146.55                      371.75
+            DSL                 Yes Bank transfer (automatic)           336             15            4.46                  22895.95                      908.30
+             No No internet service   Credit card (automatic)           331              9            2.72                   7088.75                      198.40
+--------------------------------------------------------------------------------
+
+[QUERY 6: Ranking High-Risk Customer Segments Using Window Functions]
+      Contract InternetService             PaymentMethod  total_customers  churned_customers  segment_churn_rate_pct  segment_mrr_exposure_proxy  exposure_rank  churn_rate_rank  cumulative_mrr_exposure  cumulative_pct_of_total_exposure
+Month-to-month     Fiber optic          Electronic check             1307                789                   60.37                    68281.50              1                1                 68281.50                             49.08
+Month-to-month     Fiber optic Bank transfer (automatic)              327                149                   45.57                    13062.10              2                3                 81343.60                             58.47
+Month-to-month     Fiber optic   Credit card (automatic)              293                122                   41.64                    10731.15              3                4                 92074.75                             66.18
+Month-to-month             DSL          Electronic check              474                192                   40.51                     8776.45              4                5                100851.20                             72.49
+Month-to-month     Fiber optic              Mailed check              201                102                   50.75                     8407.25              5                2                109258.45                             78.53
+Month-to-month             DSL              Mailed check              367                113                   30.79                     5292.10              6                6                114550.55                             82.33
+      One year     Fiber optic          Electronic check              196                 51                   26.02                     5149.65              7                8                119700.20                             86.03
+Month-to-month             DSL   Credit card (automatic)              185                 50                   27.03                     2474.80              8                7                122175.00                             87.81
+      One year     Fiber optic   Credit card (automatic)              150                 23                   15.33                     2392.35              9               14                124567.35                             89.53
+      One year     Fiber optic Bank transfer (automatic)              157                 23                   14.65                     2344.35             10               15                126911.70                             91.22
+Month-to-month             DSL Bank transfer (automatic)              197                 39                   19.80                     1823.90             11               11                128735.60                             92.53
+      Two year     Fiber optic Bank transfer (automatic)              162                 15                    9.26                     1580.15             12               20                130315.75                             93.66
+Month-to-month              No              Mailed check              325                 67                   20.62                     1345.05             13                9                131660.80                             94.63
+      One year             DSL   Credit card (automatic)              172                 17                    9.88                     1133.00             14               17                132793.80                             95.45
+      Two year     Fiber optic          Electronic check               92                  9                    9.78                      915.25             15               18                133709.05                             96.10
+      One year             DSL              Mailed check              137                 14                   10.22                      894.65             16               16                134603.70                             96.75
+      One year             DSL Bank transfer (automatic)              145                 11                    7.59                      696.75             17               22                135300.45                             97.25
+      One year     Fiber optic              Mailed check               36                  7                   19.44                      685.60             18               12                135986.05                             97.74
+      Two year     Fiber optic   Credit card (automatic)              154                  6                    3.90                      655.20             19               27                136641.25                             98.21
+      One year             DSL          Electronic check              116                 11                    9.48                      631.85             20               19                137273.10                             98.66
+      Two year             DSL   Credit card (automatic)              237                  5                    2.11                      361.70             21               28                137634.80                             98.92
+Month-to-month              No Bank transfer (automatic)               65                 13                   20.00                      265.95             22               10                137900.75                             99.12
+Month-to-month              No          Electronic check               69                 13                   18.84                      257.65             23               13                138158.40                             99.30
+      Two year             DSL          Electronic check               58                  4                    6.90                      231.10             24               23                138389.50                             99.47
+      Two year             DSL Bank transfer (automatic)              224                  3                    1.34                      212.90             25               29                138602.40                             99.62
+Month-to-month              No   Credit card (automatic)               65                  6                    9.23                      129.20             26               21                138731.60                             99.71
+      Two year     Fiber optic              Mailed check               21                  1                    4.76                       95.50             27               25                138827.10                             99.78
+      One year              No Bank transfer (automatic)               89                  4                    4.49                       86.05             28               26                138913.15                             99.84
+      Two year              No   Credit card (automatic)              190                  2                    1.05                       49.90             29               32                138963.05                             99.88
+      One year              No          Electronic check               35                  2                    5.71                       45.30             30               24                139008.35                             99.91
+      Two year              No              Mailed check              252                  2                    0.79                       43.85             31               33                139052.20                             99.94
+      One year              No              Mailed check              164                  2                    1.22                       39.60             32               31                139091.80                             99.97
+      Two year              No Bank transfer (automatic)              178                  1                    0.56                       19.75             33               34                139111.55                             99.99
+      One year              No   Credit card (automatic)               76                  1                    1.32                       19.30             34               30                139130.85                            100.00
+      Two year             DSL              Mailed check              109                  0                    0.00                        0.00             35               35                139130.85                            100.00
+      Two year              No          Electronic check               18                  0                    0.00                        0.00             35               35                139130.85                            100.00
+--------------------------------------------------------------------------------
+
+[QUERY 7: Advanced CTE - Segment Risk Index vs Portfolio Baseline]
+      Contract      charge_tier  payment_channel tech_support_status  customer_count  churned_count  cohort_churn_rate  churn_risk_index  cohort_mrr_exposure  pct_of_total_portfolio_exposure
+Month-to-month   High ($70-$90) Electronic Check                  No             652            408              62.58             235.8             32622.20                            23.45
+Month-to-month Very High (>$90) Electronic Check                  No             425            260              61.18             230.5             25409.25                            18.26
+Month-to-month Very High (>$90)    Other Payment                  No             212            102              48.11             181.3              9973.10                             7.17
+Month-to-month Medium ($35-$70) Electronic Check                  No             364            173              47.53             179.1              9403.60                             6.76
+Month-to-month   High ($70-$90)    Other Payment                  No             416            197              47.36             178.5             15584.40                            11.20
+Month-to-month   High ($70-$90) Electronic Check                 Yes              80             33              41.25             155.4              2732.20                             1.96
+Month-to-month Very High (>$90) Electronic Check                 Yes             113             46              40.71             153.4              4639.30                             3.33
+Month-to-month       Low (<$35) Electronic Check                  No             131             50              38.17             143.8              1280.65                             0.92
+Month-to-month Very High (>$90)    Other Payment                 Yes             105             38              36.19             136.4              3866.80                             2.78
+      One year Very High (>$90) Electronic Check                 Yes              65             21              32.31             121.8              2216.95                             1.59
+Month-to-month Medium ($35-$70)    Other Payment                  No             456            145              31.80             119.8              7574.05                             5.44
+Month-to-month Medium ($35-$70) Electronic Check                 Yes              74             20              27.03             101.9              1103.65                             0.79
+Month-to-month Medium ($35-$70)    Other Payment                 Yes             176             40              22.73              85.7              2127.05                             1.53
+Month-to-month   High ($70-$90)    Other Payment                 Yes              94             21              22.34              84.2              1749.55                             1.26
+      One year Very High (>$90) Electronic Check                  No             101             22              21.78              82.1              2239.20                             1.61
+Month-to-month       Low (<$35)    Other Payment                  No             548            114              20.80              78.4              2532.85                             1.82
+      One year Very High (>$90)    Other Payment                  No             145             26              17.93              67.6              2617.15                             1.88
+      One year Very High (>$90)    Other Payment                 Yes             135             24              17.78              67.0              2564.25                             1.84
+      One year Medium ($35-$70) Electronic Check                  No              45              6              13.33              50.2               294.20                             0.21
+      One year   High ($70-$90)    Other Payment                 Yes             119             15              12.61              47.5              1173.70                             0.84
+      Two year Very High (>$90)    Other Payment                  No              70              7              10.00              37.7               730.60                             0.53
+      One year Medium ($35-$70)    Other Payment                  No             134             11               8.21              30.9               614.70                             0.44
+      One year Medium ($35-$70) Electronic Check                 Yes              37              3               8.11              30.6               180.30                             0.13
+      Two year Very High (>$90) Electronic Check                 Yes              63              5               7.94              29.9               531.55                             0.38
+      One year   High ($70-$90)    Other Payment                  No              89              7               7.87              29.7               528.90                             0.38
+      One year   High ($70-$90) Electronic Check                 Yes              34              2               5.88              22.2               173.90                             0.12
+      One year Medium ($35-$70)    Other Payment                 Yes             155              9               5.81              21.9               555.65                             0.40
+      Two year Very High (>$90)    Other Payment                 Yes             276             16               5.80              21.9              1692.70                             1.22
+      One year       Low (<$35) Electronic Check                  No              36              2               5.56              21.0                45.30                             0.03
+      One year       Low (<$35)    Other Payment                  No             342              9               2.63               9.9               203.75                             0.15
+      Two year   High ($70-$90)    Other Payment                  No              53              1               1.89               7.1                80.55                             0.06
+      Two year Medium ($35-$70)    Other Payment                 Yes             198              3               1.52               5.7               177.20                             0.13
+      Two year   High ($70-$90)    Other Payment                 Yes             245              3               1.22               4.6               224.40                             0.16
+      Two year       Low (<$35)    Other Payment                  No             621              5               0.81               3.1               113.50                             0.08
+      Two year Medium ($35-$70)    Other Payment                  No              61              0               0.00               0.0                 0.00                             0.00
+--------------------------------------------------------------------------------
