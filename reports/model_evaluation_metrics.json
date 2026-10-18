@@ -1,0 +1,124 @@
+{
+  "Baseline (Most Frequent)": {
+    "cv_scores": {},
+    "test_metrics": {
+      "accuracy": 0.7346,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 1.0,
+      "f1_score": 0.0,
+      "roc_auc": 0.5,
+      "pr_auc": 0.2654,
+      "brier_score": 0.0,
+      "confusion_matrix": {
+        "TN": 1035,
+        "FP": 0,
+        "FN": 374,
+        "TP": 0
+      }
+    }
+  },
+  "Logistic Regression (Balanced)": {
+    "cv_scores": {
+      "accuracy": {
+        "mean": 0.7497,
+        "std": 0.0146
+      },
+      "precision": {
+        "mean": 0.5185,
+        "std": 0.0181
+      },
+      "recall": {
+        "mean": 0.802,
+        "std": 0.0379
+      },
+      "f1": {
+        "mean": 0.6296,
+        "std": 0.0226
+      },
+      "roc_auc": {
+        "mean": 0.8459,
+        "std": 0.0124
+      }
+    },
+    "test_metrics": {
+      "accuracy": 0.7381,
+      "precision": 0.5043,
+      "recall": 0.7834,
+      "specificity": 0.7217,
+      "f1_score": 0.6136,
+      "roc_auc": 0.8417,
+      "pr_auc": 0.6331,
+      "brier_score": 0.1686,
+      "confusion_matrix": {
+        "TN": 747,
+        "FP": 288,
+        "FN": 81,
+        "TP": 293
+      }
+    }
+  },
+  "Random Forest (Balanced)": {
+    "cv_scores": {
+      "accuracy": {
+        "mean": 0.7531,
+        "std": 0.0138
+      },
+      "precision": {
+        "mean": 0.5231,
+        "std": 0.0176
+      },
+      "recall": {
+        "mean": 0.8013,
+        "std": 0.0175
+      },
+      "f1": {
+        "mean": 0.6328,
+        "std": 0.0164
+      },
+      "roc_auc": {
+        "mean": 0.8463,
+        "std": 0.0111
+      }
+    },
+    "test_metrics": {
+      "accuracy": 0.7466,
+      "precision": 0.5146,
+      "recall": 0.8021,
+      "specificity": 0.7266,
+      "f1_score": 0.627,
+      "roc_auc": 0.8429,
+      "pr_auc": 0.6506,
+      "brier_score": 0.1651,
+      "confusion_matrix": {
+        "TN": 752,
+        "FP": 283,
+        "FN": 74,
+        "TP": 300
+      }
+    }
+  },
+  "threshold_optimization": {
+    "default_threshold_0_50": {
+      "threshold": 0.5,
+      "precision": 0.5043,
+      "recall": 0.7834,
+      "f1": 0.6136,
+      "net_business_value": 14775.0
+    },
+    "optimal_f1_threshold": {
+      "threshold": 0.57,
+      "f1": 0.6227,
+      "precision": 0.5415,
+      "recall": 0.7326,
+      "net_business_value": 14750.0
+    },
+    "optimal_economic_threshold": {
+      "threshold": 0.44,
+      "net_business_value": 15100.0,
+      "precision": 0.4802,
+      "recall": 0.8422,
+      "f1": 0.6117
+    }
+  }
+}

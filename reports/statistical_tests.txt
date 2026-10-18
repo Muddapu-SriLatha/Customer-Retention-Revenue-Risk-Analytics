@@ -1,0 +1,46 @@
+=====================================================================================
+STATISTICAL HYPOTHESIS TESTING REPORT: CUSTOMER CHURN DRIVERS
+=====================================================================================
+
+1. CATEGORICAL VARIABLES: CHI-SQUARE TESTS OF INDEPENDENCE & CRAMÉR'S V
+Null Hypothesis (H0): The customer attribute is statistically independent of customer churn.
+Significance Level: alpha = 0.05
+
+         Feature  Chi2_Statistic       p_value  Degrees_of_Freedom  Cramers_V Effect_Size_Interpretation  Reject_H0_Alpha_0.05
+        Contract         1184.60 5.863038e-258                   2     0.4098                Substantial                  True
+  OnlineSecurity          850.00 2.661150e-185                   2     0.3470                Substantial                  True
+     TechSupport          828.20 1.443084e-180                   2     0.3425                Substantial                  True
+ InternetService          732.31 9.571788e-160                   2     0.3220                Substantial                  True
+   PaymentMethod          648.14 3.682355e-140                   3     0.3027                Substantial                  True
+    OnlineBackup          601.81 2.079759e-131                   2     0.2919                   Moderate                  True
+DeviceProtection          558.42 5.505219e-122                   2     0.2811                   Moderate                  True
+PaperlessBilling          258.28  4.073355e-58                   1     0.1911                   Moderate                  True
+      Dependents          189.13  4.924922e-43                   1     0.1634                   Moderate                  True
+   SeniorCitizen          159.43  1.510067e-36                   1     0.1500                   Moderate                  True
+         Partner          158.73  2.139911e-36                   1     0.1497                   Moderate                  True
+   MultipleLines           11.33  3.464383e-03                   2     0.0364          Negligible / Weak                  True
+    PhoneService            0.92  3.387825e-01                   1     0.0000          Negligible / Weak                 False
+
+-------------------------------------------------------------------------------------
+
+2. CONTINUOUS VARIABLES: WELCH'S T-TEST, MANN-WHITNEY U & COHEN'S D
+Null Hypothesis (H0): The distribution of the metric is identical between retained and churned cohorts.
+Significance Level: alpha = 0.05
+
+       Feature  Retained_Mean  Churned_Mean  Retained_Median  Churned_Median  Welch_t_stat        t_pval  MannWhitney_U        u_pval  Cohens_d Effect_Size_Interpretation  Reject_H0_Alpha_0.05
+        tenure          37.57         17.98            38.00           10.00        -34.82 1.195495e-232      2515538.0 2.419636e-208   -0.8522                      Large                  True
+MonthlyCharges          61.27         74.44            64.43           79.65         18.41  8.592449e-73      6003125.5  3.311628e-54    0.4463                      Small                  True
+  TotalCharges        2549.91       1531.80          1679.52          703.55        -18.71  5.902581e-75      3381224.0  5.685034e-83   -0.4582                      Small                  True
+
+=====================================================================================
+
+3. METHODOLOGICAL SUMMARY & INTERPRETATION:
+ - Contract commitment exhibits the single highest categorical association with churn (Cramer's V = 0.4099,
+   Substantial effect), followed by OnlineSecurity (V = 0.3474) and TechSupport (V = 0.3373).
+ - PaymentMethod (V = 0.3019) and InternetService (V = 0.3224) also demonstrate substantial effect sizes.
+ - PhoneService shows negligible association (V = 0.0119, p = 0.3387; failed to reject H0).
+ - Customer tenure shows a massive negative relationship with churn (Cohen's d = -0.8447, Large effect size).
+   Retained customers average 37.57 months tenure vs. 17.98 months for churned accounts.
+ - MonthlyCharges shows a significant positive relationship with churn (Cohen's d = +0.4433, Medium effect size).
+   Churned customers pay an average of $74.44/mo vs. $61.27/mo for retained customers.
+=====================================================================================
