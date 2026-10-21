@@ -1,0 +1,124 @@
+// ==============================================================================
+// Customer Retention & Revenue Risk Analytics
+// Power BI DAX Measures Definition File
+// Table Name in Data Model: 'telco_churn'
+// Dedicated Measure Container: '_Measures'
+// ==============================================================================
+
+// ------------------------------------------------------------------------------
+// 1. VOLUME & CUSTOMER COUNT MEASURES
+// ------------------------------------------------------------------------------
+
+Total Customers = 
+COUNTROWS('telco_churn')
+
+Retained Customers = 
+CALCULATE(
+    COUNTROWS('telco_churn'),
+    'telco_churn'[churn_binary] = 0
+)
+
+Churned Customers = 
+CALCULATE(
+    COUNTROWS('telco_churn'),
+    'telco_churn'[churn_binary] = 1
+)
+
+Churn Rate = 
+DIVIDE(
+    [Churned Customers],
+    [Total Customers],
+    0
+)
+
+// ------------------------------------------------------------------------------
+// 2. FINANCIAL & BILLING METRICS
+// ------------------------------------------------------------------------------
+
+Total Monthly Billings = 
+SUM('telco_churn'[MonthlyCharges])
+
+Average Monthly Charges = 
+AVERAGE('telco_churn'[MonthlyCharges])
+
+Average Monthly Charges - Retained = 
+CALCULATE(
+    AVERAGE('telco_churn'[MonthlyCharges]),
+    'telco_churn'[churn_binary] = 0
+)
+
+Average Monthly Charges - Churned = 
+CALCULATE(
+    AVERAGE('telco_churn'[MonthlyCharges]),
+    'telco_churn'[churn_binary] = 1
+)
+
+Monthly Billing Premium - Churned vs Retained = 
+[Average Monthly Charges - Churned] - [Average Monthly Charges - Retained]
+
+Total Historical Realized Revenue = 
+SUM('telco_churn'[TotalCharges])
+
+Average Customer Lifetime Spend = 
+AVERAGE('telco_churn'[TotalCharges])
+
+Average Tenure Months = 
+AVERAGE('telco_churn'[tenure])
+
+// ------------------------------------------------------------------------------
+// 3. REVENUE RISK EXPOSURE PROXY MEASURES
+// ------------------------------------------------------------------------------
+
+Monthly Revenue Exposure Proxy = 
+CALCULATE(
+    SUM('telco_churn'[MonthlyCharges]),
+    'telco_churn'[churn_binary] = 1
+)
+
+Annualized Revenue Exposure Proxy = 
+[Monthly Revenue Exposure Proxy] * 12
+
+Pct Monthly Billings Exposed = 
+DIVIDE(
+    [Monthly Revenue Exposure Proxy],
+    [Total Monthly Billings],
+    0
+)
+
+// ------------------------------------------------------------------------------
+// 4. BENCHMARKING & RELATIVE RISK INDEX
+// ------------------------------------------------------------------------------
+
+Portfolio Baseline Churn Rate = 
+CALCULATE(
+    [Churn Rate],
+    ALL('telco_churn')
+)
+
+Churn Risk Index = 
+DIVIDE(
+    [Churn Rate],
+    [Portfolio Baseline Churn Rate],
+    1
+) * 100
+
+// ------------------------------------------------------------------------------
+// 5. HYPOTHETICAL RETENTION CAMPAIGN SIMULATOR
+// (Connects to Power BI What-If Parameters: 'Target Churn Reduction %' and 'Outreach Cost')
+// ------------------------------------------------------------------------------
+
+Simulated Saved Customers = 
+[Churned Customers] * 0.15 // Default 15% rescue rate assumption
+
+Simulated Monthly Recovered Revenue = 
+[Monthly Revenue Exposure Proxy] * 0.15
+
+Simulated Annual Recovered Revenue = 
+[Simulated Monthly Recovered Revenue] * 12
+
+Campaign Break-Even Accounts Needed = 
+DIVIDE(
+    50000, // Illustrative $50,000 campaign investment
+    ([Average Monthly Charges - Churned] * 12),
+    0
+)
